@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/core';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -11,8 +11,11 @@ import { BullModule } from '@nestjs/bullmq';
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
         password: process.env.REDIS_PASSWORD || '',
-        // HTTP-based redis proxy like Upstash would use different config here
-        // This abstracts the queueing layer from the raw NestJS execution
+        maxRetriesPerRequest: null,
+        enableOfflineQueue: false,
+        lazyConnect: true,
+        connectTimeout: 2000,
+        retryStrategy: () => null,
       },
     }),
     BullModule.registerQueue({

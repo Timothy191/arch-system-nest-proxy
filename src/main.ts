@@ -1,20 +1,23 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import serverlessExpress from 'serverless-http';
+import { AppModule } from './app.module.js';
 
-let cachedServer: any;
+let cachedApp: any;
 
 async function bootstrap() {
-  if (!cachedServer) {
+  if (!cachedApp) {
     const app = await NestFactory.create(AppModule);
+    app.enableCors({
+      origin: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      allowedHeaders: '*',
+    });
     await app.init();
-    const expressApp = app.getHttpAdapter().getInstance();
-    cachedServer = serverlessExpress(expressApp);
+    cachedApp = app.getHttpAdapter().getInstance();
   }
-  return cachedServer;
+  return cachedApp;
 }
 
 export default async function handler(req: any, res: any) {
-  const server = await bootstrap();
-  return server(req, res);
+  const expressApp = await bootstrap();
+  return expressApp(req, res);
 }
