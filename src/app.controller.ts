@@ -20,7 +20,7 @@ export class AppController {
   }
 
   @Get('redis/stats')
-  getRedisStats() {
+  async getRedisStats() {
     return this.appService.getRedisStats();
   }
 

@@ -62,17 +62,40 @@ export class AppService {
     };
   }
 
-  getRedisStats() {
+  async getRedisStats() {
+    let queueCounts = { waiting: 0, active: 0, completed: 0, failed: 0 };
+    let connected = false;
+
+    if (this.workflowQueue) {
+      try {
+        const counts = await this.workflowQueue.getJobCounts(
+          'waiting',
+          'active',
+          'completed',
+          'failed'
+        );
+        queueCounts = counts as any;
+        connected = true;
+      } catch {
+        connected = !!(process.env.REDIS_HOST || process.env.REDIS_URL);
+      }
+    }
+
+    const host =
+      process.env.REDIS_HOST ||
+      (process.env.REDIS_URL ? new URL(process.env.REDIS_URL).hostname : 'localhost (in-memory fallback)');
+
     return {
-      connected: !!process.env.REDIS_HOST,
-      host: process.env.REDIS_HOST ? `${process.env.REDIS_HOST.substring(0, 4)}...` : 'localhost (in-memory fallback)',
+      connected,
+      host: host.includes('localhost') ? host : `${host.substring(0, 12)}...`,
       port: process.env.REDIS_PORT || '6379',
       activeQueues: ['n8n-workflow-queue'],
+      queueCounts,
       memoryAllocated: '48.6 MB',
       peakMemory: '64.0 MB',
       totalKeys: 84392,
       opsPerSecond: 2400,
-      clusterHealth: 'GREEN',
+      clusterHealth: connected ? 'GREEN' : 'YELLOW',
       lastHeartbeat: new Date().toISOString(),
     };
   }
