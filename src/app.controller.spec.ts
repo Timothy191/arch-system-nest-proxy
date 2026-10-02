@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return operational status object', () => {
+      const res = appController.getHello();
+      expect(res).toHaveProperty('status', 'operational');
+      expect(res).toHaveProperty('service', 'arch-system-nest-proxy');
     });
   });
 });

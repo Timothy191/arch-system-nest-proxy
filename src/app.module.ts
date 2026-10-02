@@ -4,7 +4,7 @@ import { AppService } from './app.service.js';
 import { BullModule } from '@nestjs/bullmq';
 
 function getRedisConnectionOptions() {
-  const redisUrl = process.env.REDIS_URL;
+  const redisUrl = process.env.QUEUE_REDIS_URL || process.env.REDIS_URL;
   const options: Record<string, any> = {
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
