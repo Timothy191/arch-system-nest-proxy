@@ -44,6 +44,10 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
+## Deployment
+
+Pushes to `master` on the connected GitHub repository auto-deploy to Vercel Production.
+
 ## Run tests
 
 ```bash
