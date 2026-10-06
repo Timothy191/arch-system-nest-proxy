@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service.js';
+import { DispatchWorkflowDto } from './dto/dispatch-workflow.dto.js';
+import { ApiKeyGuard } from './common/api-key.guard.js';
 
 @Controller()
 export class AppController {
@@ -12,11 +14,7 @@ export class AppController {
 
   @Get('health')
   getHealth() {
-    return {
-      status: 'ok',
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-    };
+    return this.appService.getHealth();
   }
 
   @Get('redis/stats')
@@ -24,8 +22,14 @@ export class AppController {
     return this.appService.getRedisStats();
   }
 
+  @Get('workflows/jobs/:jobId')
+  async getJobStatus(@Param('jobId') jobId: string) {
+    return this.appService.getJobStatus(jobId);
+  }
+
   @Post('workflows/dispatch')
-  async dispatchWorkflow(@Body() body: any) {
+  @UseGuards(ApiKeyGuard)
+  async dispatchWorkflow(@Body() body: DispatchWorkflowDto) {
     return this.appService.dispatchWorkflow(body);
   }
 }

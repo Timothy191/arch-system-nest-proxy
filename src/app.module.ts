@@ -5,12 +5,20 @@ import { BullModule } from '@nestjs/bullmq';
 
 function getRedisConnectionOptions() {
   const redisUrl = process.env.QUEUE_REDIS_URL || process.env.REDIS_URL;
+  // Certificate verification is ON by default; set REDIS_TLS_INSECURE=true
+  // only for local/self-signed setups (see recommendation: TLS verification).
+  const insecureTls = process.env.REDIS_TLS_INSECURE === 'true';
   const options: Record<string, any> = {
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
     lazyConnect: true,
     connectTimeout: 5000,
-    retryStrategy: () => null,
+    retryStrategy: (times: number) => {
+      if (times > 5) {
+        return null;
+      }
+      return Math.min(times * 200, 2000);
+    },
   };
 
   if (redisUrl) {
@@ -18,10 +26,15 @@ function getRedisConnectionOptions() {
       const parsed = new URL(redisUrl);
       options.host = parsed.hostname;
       options.port = parseInt(parsed.port || '6379', 10);
-      if (parsed.password) options.password = decodeURIComponent(parsed.password);
-      if (parsed.username && parsed.username !== 'default') options.username = parsed.username;
-      if (parsed.protocol === 'rediss:' || parsed.hostname.includes('upstash.io')) {
-        options.tls = { rejectUnauthorized: false };
+      if (parsed.password)
+        options.password = decodeURIComponent(parsed.password);
+      if (parsed.username && parsed.username !== 'default')
+        options.username = parsed.username;
+      if (
+        parsed.protocol === 'rediss:' ||
+        parsed.hostname.includes('upstash.io')
+      ) {
+        options.tls = { rejectUnauthorized: !insecureTls };
       }
       return options;
     } catch {
@@ -37,7 +50,7 @@ function getRedisConnectionOptions() {
     process.env.REDIS_HOST?.includes('upstash.io') ||
     options.port === 6380
   ) {
-    options.tls = { rejectUnauthorized: false };
+    options.tls = { rejectUnauthorized: !insecureTls };
   }
   return options;
 }
